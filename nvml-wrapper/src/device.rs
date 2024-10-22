@@ -11,11 +11,10 @@ use crate::bitmasks::Behavior;
 
 use crate::enum_wrappers::{bool_from_state, device::*, state_from_bool};
 
-use crate::enums::device::BusType;
-use crate::enums::device::DeviceArchitecture;
-use crate::enums::device::GpuLockedClocksSetting;
-use crate::enums::device::PcieLinkMaxSpeed;
-use crate::enums::device::PowerSource;
+use crate::enums::device::{
+    BusType, DeviceArchitecture, FanControlPolicy, GpuLockedClocksSetting, PcieLinkMaxSpeed,
+    PowerSource,
+};
 #[cfg(target_os = "linux")]
 use crate::error::NvmlErrorWithSource;
 use crate::error::{nvml_sym, nvml_try, Bits, NvmlError};
@@ -1354,6 +1353,88 @@ impl<'nvml> Device<'nvml> {
             nvml_try(sym(self.device, fan_idx, &mut speed))?;
 
             Ok(speed)
+        }
+    }
+
+    /**
+    Gets the current fan control policy.
+
+    You can determine valid fan indices using [`Self::num_fans()`].
+
+    # Errors
+
+    * `Uninitialized`, if the library has not been successfully initialized
+    * `InvalidArg`, if this `Device` is invalid or `fan_idx` is invalid
+    * `NotSupported`, if this `Device` does not have a fan or is newer than Maxwell
+    * `GpuLost`, if this `Device` has fallen off the bus or is otherwise inaccessible
+    * `UnexpectedVariant`, for which you can read the docs for
+    * `Unknown`, on any unexpected error
+
+    # Device Support
+
+    Supports Maxwell or newer fully supported devices.
+     */
+    #[doc(alias = "nvmlGetFanControlPolicy_v2")]
+    pub fn fan_control_policy(&self, fan_idx: u32) -> Result<FanControlPolicy, NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetFanControlPolicy_v2.as_ref())?;
+
+        unsafe {
+            let mut policy: nvmlFanControlPolicy_t = mem::zeroed();
+            nvml_try(sym(self.device, fan_idx, &mut policy))?;
+
+            FanControlPolicy::try_from(policy)
+        }
+    }
+
+    /**
+    Sets the current fan control policy.
+
+    You can determine valid fan indices using [`Self::num_fans()`].
+
+    # Errors
+
+    * `Uninitialized`, if the library has not been successfully initialized
+    * `InvalidArg`, if this `Device` is invalid or `fan_idx` is invalid
+    * `NotSupported`, if this `Device` does not have a fan or is newer than Maxwell
+    * `GpuLost`, if this `Device` has fallen off the bus or is otherwise inaccessible
+    * `UnexpectedVariant`, for which you can read the docs for
+    * `Unknown`, on any unexpected error
+
+    # Device Support
+
+    Unknown, this function is undocumented
+    */
+    /*#[doc(alias = "nvmlSetFanControlPolicy")]
+    pub fn set_fan_control_policy(
+        &mut self,
+        fan_idx: u32,
+        policy: FanControlPolicy,
+    ) -> Result<(), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceSetFanControlPolicy.as_ref())?;
+
+        unsafe { nvml_try(sym(self.device, fan_idx, policy.as_c())) }
+    }*/
+
+    pub fn set_fan_speed(&mut self, fan_idx: u32, speed: u32) -> Result<(), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceSetFanSpeed_v2.as_ref())?;
+
+        unsafe { nvml_try(sym(self.device, fan_idx, speed)) }
+    }
+
+    pub fn set_default_fan_speed(&mut self, fan_idx: u32) -> Result<(), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceSetDefaultFanSpeed_v2.as_ref())?;
+
+        unsafe { nvml_try(sym(self.device, fan_idx)) }
+    }
+
+    pub fn min_max_fan_speed(&mut self) -> Result<(u32, u32), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetMinMaxFanSpeed.as_ref())?;
+
+        unsafe {
+            let mut min = mem::zeroed();
+            let mut max = mem::zeroed();
+            nvml_try(sym(self.device, &mut min, &mut max))?;
+            Ok((min, max))
         }
     }
 

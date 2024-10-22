@@ -1,4 +1,8 @@
+use std::thread::sleep;
+use std::time::Duration;
+
 use nvml_wrapper::enum_wrappers::device::{Clock, TemperatureSensor};
+use nvml_wrapper::enums::device::FanControlPolicy;
 use nvml_wrapper::error::NvmlError;
 use nvml_wrapper::{cuda_driver_version_major, cuda_driver_version_minor, Nvml};
 use pretty_bytes::converter::convert;
@@ -11,7 +15,7 @@ fn main() -> Result<(), NvmlError> {
     // Grabbing the first device in the system, whichever one that is.
     // If you want to ensure you get the same physical device across reboots,
     // get devices via UUID or PCI bus IDs.
-    let device = nvml.device_by_index(0)?;
+    let mut device = nvml.device_by_index(0)?;
 
     // Now we can do whatever we want, like getting some data...
     let name = device.name()?;
@@ -81,6 +85,38 @@ fn main() -> Result<(), NvmlError> {
         cuda_driver_version_major(cuda_version),
         cuda_driver_version_minor(cuda_version)
     );
+
+    /*println!("Fan count: {:?}", device.num_fans());
+    println!("Fan control policy: {:?}", device.fan_control_policy(0));
+    // println!(
+    //     "{:?}",
+    //     device.set_fan_control_policy(0, FanControlPolicy::Manual)
+    // );
+    println!("{:?}", device.set_fan_speed(0, 70));
+    println!("{:?}", device.set_fan_speed(1, 70));
+
+    println!("Set custom speed, current speed: {:?}", device.fan_speed(0));
+    sleep(Duration::from_millis(2500));
+    println!("Fan control policy: {:?}", device.fan_control_policy(0));
+
+    println!("{:?}", device.set_default_fan_speed(0));
+    println!("{:?}", device.set_default_fan_speed(1));
+    println!(
+        "Set default speed, current speed: {:?}",
+        device.fan_speed(0)
+    );
+    sleep(Duration::from_millis(1500));
+    println!("current speed: {:?}", device.fan_speed(0));
+    // println!(
+    //     "{:?}",
+    //     device.set_fan_control_policy(0, FanControlPolicy::TemperatureContinousSw)
+    // );*/
+    println!("min max speed: {:?}", device.min_max_fan_speed());
+    println!("{:?}", device.set_fan_speed(0, 100));
+    sleep(Duration::from_millis(1500));
+    println!("{:?}", device.set_fan_speed(0, 20));
+    sleep(Duration::from_millis(10000));
+    println!("{:?}", device.set_default_fan_speed(0));
 
     print!("\n\n");
     Ok(())
