@@ -1502,6 +1502,37 @@ impl<'nvml> Device<'nvml> {
         }
     }
 
+    // TODO: these functions can be replaced with `ClockOffsets` ones, but the header needs to be updated for driver 555+
+    #[doc(alias = "nvmlDeviceGetMemClkMinMaxVfOffset")]
+    pub fn mem_clk_min_max_vf_offset(&self) -> Result<(i32, i32), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetMemClkMinMaxVfOffset.as_ref())?;
+
+        unsafe {
+            let mut min: i32 = mem::zeroed();
+            let mut max: i32 = mem::zeroed();
+            nvml_try(sym(self.device, &mut min, &mut max))?;
+            Ok((min, max))
+        }
+    }
+
+    #[doc(alias = "nvmlDeviceGetMemClkVfOffset")]
+    pub fn mem_clk_vf_offset(&self) -> Result<i32, NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetMemClkVfOffset.as_ref())?;
+
+        unsafe {
+            let mut value: i32 = mem::zeroed();
+            nvml_try(sym(self.device, &mut value))?;
+            Ok(value)
+        }
+    }
+
+    #[doc(alias = "nvmlDeviceSetMemClkVfOffset")]
+    pub fn set_mem_clk_vf_offset(&self, value: i32) -> Result<(), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceSetMemClkVfOffset.as_ref())?;
+
+        unsafe { nvml_try(sym(self.device, value)) }
+    }
+
     /**
     Gets information about processes with a graphics context running on this `Device`.
 

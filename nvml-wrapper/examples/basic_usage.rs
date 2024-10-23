@@ -86,6 +86,12 @@ fn main() -> Result<(), NvmlError> {
         cuda_driver_version_minor(cuda_version)
     );
 
+    println!(
+        "Mem clk offset range: {:?}",
+        device.mem_clk_min_max_vf_offset()
+    );
+    println!("Mem clk offset: {:?}", device.mem_clk_vf_offset());
+
     /*println!("Fan count: {:?}", device.num_fans());
     println!("Fan control policy: {:?}", device.fan_control_policy(0));
     // println!(
@@ -111,12 +117,12 @@ fn main() -> Result<(), NvmlError> {
     //     "{:?}",
     //     device.set_fan_control_policy(0, FanControlPolicy::TemperatureContinousSw)
     // );*/
-    println!("min max speed: {:?}", device.min_max_fan_speed());
-    println!("{:?}", device.set_fan_speed(0, 100));
-    sleep(Duration::from_millis(1500));
-    println!("{:?}", device.set_fan_speed(0, 20));
-    sleep(Duration::from_millis(10000));
-    println!("{:?}", device.set_default_fan_speed(0));
+    // println!("min max speed: {:?}", device.min_max_fan_speed());
+    // println!("{:?}", device.set_fan_speed(0, 100));
+    // sleep(Duration::from_millis(1500));
+    // println!("{:?}", device.set_fan_speed(0, 20));
+    // sleep(Duration::from_millis(10000));
+    // println!("{:?}", device.set_default_fan_speed(0));
 
     print!("\n\n");
     Ok(())
