@@ -1,8 +1,4 @@
-use std::thread::sleep;
-use std::time::Duration;
-
-use nvml_wrapper::enum_wrappers::device::{Clock, TemperatureSensor};
-use nvml_wrapper::enums::device::FanControlPolicy;
+use nvml_wrapper::enum_wrappers::device::{Clock, ClockType, PerformanceState, TemperatureSensor};
 use nvml_wrapper::error::NvmlError;
 use nvml_wrapper::{cuda_driver_version_major, cuda_driver_version_minor, Nvml};
 use pretty_bytes::converter::convert;
@@ -15,7 +11,7 @@ fn main() -> Result<(), NvmlError> {
     // Grabbing the first device in the system, whichever one that is.
     // If you want to ensure you get the same physical device across reboots,
     // get devices via UUID or PCI bus IDs.
-    let mut device = nvml.device_by_index(0)?;
+    let device = nvml.device_by_index(0)?;
 
     // Now we can do whatever we want, like getting some data...
     let name = device.name()?;
@@ -87,6 +83,16 @@ fn main() -> Result<(), NvmlError> {
     );
 
     println!("pstate: {:?}", device.performance_state());
+
+    let pstates = (0..15).map(|i| PerformanceState::try_from(i).unwrap());
+    for pstate in pstates {
+        for clock_type in [ClockType::Graphics, ClockType::Mem] {
+            println!(
+                "{clock_type:?} offset for pstate {pstate:?}: {:?}",
+                device.clock_offsets(clock_type, pstate)
+            )
+        }
+    }
 
     /*println!("Fan count: {:?}", device.num_fans());
     println!("Fan control policy: {:?}", device.fan_control_policy(0));

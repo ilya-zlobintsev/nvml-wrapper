@@ -69,3 +69,4 @@ functions.
 // warnings and according to commentary are not useful. See
 // https://github.com/rust-lang/rust-bindgen/issues/1651 for more.
 pub mod bindings;
+pub mod constants;

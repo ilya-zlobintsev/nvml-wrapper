@@ -305,7 +305,7 @@ Value    Performance
 ```
 */
 // Checked against local
-#[derive(EnumWrapper, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(EnumWrapper, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[wrap(c_enum = "nvmlPStates_enum")]
 pub enum PerformanceState {
@@ -630,7 +630,7 @@ pub enum ClockLimitId {
     Unlimited,
 }
 
-#[derive(EnumWrapper, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(EnumWrapper, Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[wrap(c_enum = "nvmlClockType_enum")]
 pub enum ClockType {

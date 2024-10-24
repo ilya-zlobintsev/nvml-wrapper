@@ -36,6 +36,7 @@ use std::{
     ptr,
 };
 
+use ffi::constants::NVML_CLOCK_OFFSET_V1;
 use static_assertions::assert_impl_all;
 
 /**
@@ -1435,6 +1436,27 @@ impl<'nvml> Device<'nvml> {
             let mut max = mem::zeroed();
             nvml_try(sym(self.device, &mut min, &mut max))?;
             Ok((min, max))
+        }
+    }
+
+    pub fn clock_offsets(
+        &self,
+        clock_type: ClockType,
+        power_state: PerformanceState,
+    ) -> Result<nvmlClockOffset_t, NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetClockOffsets.as_ref())?;
+
+        unsafe {
+            let mut clock_offset = nvmlClockOffset_t {
+                version: NVML_CLOCK_OFFSET_V1,
+                type_: clock_type.as_c(),
+                pstate: power_state.as_c(),
+                clockOffsetMHz: mem::zeroed(),
+                minClockOffsetMHz: mem::zeroed(),
+                maxClockOffsetMHz: mem::zeroed(),
+            };
+            nvml_try(sym(self.device, &mut clock_offset))?;
+            Ok(clock_offset)
         }
     }
 
