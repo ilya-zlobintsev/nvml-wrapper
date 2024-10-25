@@ -1,3 +1,6 @@
+use std::thread::sleep;
+use std::time::Duration;
+
 use nvml_wrapper::enum_wrappers::device::{Clock, ClockType, PerformanceState, TemperatureSensor};
 use nvml_wrapper::error::NvmlError;
 use nvml_wrapper::{cuda_driver_version_major, cuda_driver_version_minor, Nvml};
@@ -84,15 +87,38 @@ fn main() -> Result<(), NvmlError> {
 
     println!("pstate: {:?}", device.performance_state());
 
-    let pstates = (0..15).map(|i| PerformanceState::try_from(i).unwrap());
-    for pstate in pstates {
-        for clock_type in [ClockType::Graphics, ClockType::Mem] {
-            println!(
-                "{clock_type:?} offset for pstate {pstate:?}: {:?}",
-                device.clock_offsets(clock_type, pstate)
-            )
-        }
-    }
+    // let pstates = (0..15).map(|i| PerformanceState::try_from(i).unwrap());
+    let pstate = PerformanceState::Zero;
+
+    println!(
+        "current offset for pstate {pstate:?}: {:?}",
+        device.clock_offset(ClockType::Mem, pstate)
+    );
+
+    sleep(Duration::from_secs(1));
+    println!(
+        "set offset {:?}",
+        device.set_clock_offset(ClockType::Mem, pstate, -100)
+    );
+
+    println!(
+        "current offset for pstate {pstate:?}: {:?}",
+        device.clock_offset(ClockType::Mem, pstate)
+    );
+
+    println!(
+        "set offset {:?}",
+        device.set_clock_offset(ClockType::Mem, pstate, 0)
+    );
+
+    // for pstate in pstates {
+    //     for clock_type in [ClockType::Graphics, ClockType::Mem] {
+    //         println!(
+    //             "{clock_type:?} offset for pstate {pstate:?}: {:?}",
+    //             device.clock_offset(clock_type, pstate)
+    //         )
+    //     }
+    // }
 
     /*println!("Fan count: {:?}", device.num_fans());
     println!("Fan control policy: {:?}", device.fan_control_policy(0));
