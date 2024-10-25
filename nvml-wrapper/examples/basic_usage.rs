@@ -1,7 +1,7 @@
 use std::thread::sleep;
 use std::time::Duration;
 
-use nvml_wrapper::enum_wrappers::device::{Clock, TemperatureSensor};
+use nvml_wrapper::enum_wrappers::device::{Clock, ClockType, PerformanceState, TemperatureSensor};
 use nvml_wrapper::enums::device::FanControlPolicy;
 use nvml_wrapper::error::NvmlError;
 use nvml_wrapper::{cuda_driver_version_major, cuda_driver_version_minor, Nvml};
@@ -87,10 +87,35 @@ fn main() -> Result<(), NvmlError> {
     );
 
     println!(
+        "available pstates: {:?}",
+        device.supported_performance_states()
+    );
+
+    if let Ok(pstates) = device.supported_performance_states() {
+        for pstate in pstates {
+            println!(
+                "clock range of {pstate:?}: {:?}",
+                device.min_max_clock_of_pstate(ClockType::Graphics, pstate)
+            );
+        }
+    }
+
+    /*println!(
         "Mem clk offset range: {:?}",
         device.mem_clk_min_max_vf_offset()
     );
     println!("Mem clk offset: {:?}", device.mem_clk_vf_offset());
+
+    println!(
+        "set mem clk offset: {:?}",
+        device.set_mem_clk_vf_offset(-100)
+    );
+
+    println!("Mem clk offset: {:?}", device.mem_clk_vf_offset());
+
+    sleep(Duration::from_millis(1000));
+
+    println!("set mem clk offset: {:?}", device.set_mem_clk_vf_offset(0));*/
 
     /*println!("Fan count: {:?}", device.num_fans());
     println!("Fan control policy: {:?}", device.fan_control_policy(0));
