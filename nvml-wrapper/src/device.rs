@@ -1546,6 +1546,89 @@ impl<'nvml> Device<'nvml> {
         }
     }
 
+    pub fn supported_performance_states(&self) -> Result<Vec<PerformanceState>, NvmlError> {
+        let sym = nvml_sym(
+            self.nvml
+                .lib
+                .nvmlDeviceGetSupportedPerformanceStates
+                .as_ref(),
+        )?;
+
+        unsafe {
+            let mut pstates =
+                [PerformanceState::Unknown.as_c(); NVML_MAX_GPU_PERF_PSTATES as usize];
+
+            nvml_try(sym(self.device, pstates.as_mut_ptr(), pstates.len() as u32))?;
+
+            pstates
+                .into_iter()
+                .take_while(|pstate| *pstate != PerformanceState::Unknown.as_c())
+                .map(PerformanceState::try_from)
+                .collect()
+        }
+    }
+
+    #[doc(alias = "nvmlDeviceGetMinMaxClockOfPState")]
+    pub fn min_max_clock_of_pstate(
+        &self,
+        clock_type: ClockType,
+        pstate: PerformanceState,
+    ) -> Result<(u32, u32), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetMinMaxClockOfPState.as_ref())?;
+
+        unsafe {
+            let mut min: u32 = mem::zeroed();
+            let mut max: u32 = mem::zeroed();
+
+            nvml_try(sym(
+                self.device,
+                clock_type.as_c(),
+                pstate.as_c(),
+                &mut min,
+                &mut max,
+            ))?;
+
+            Ok((min, max))
+        }
+    }
+
+    // TODO: these functions can be replaced with `ClockOffsets` ones, but the header needs to be updated for driver 555+
+
+    #[doc(alias = "nvmlDeviceGetMemClkMinMaxVfOffset")]
+    pub fn mem_clk_min_max_vf_offset(&self) -> Result<(i32, i32), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetMemClkMinMaxVfOffset.as_ref())?;
+
+        unsafe {
+            let mut min: i32 = mem::zeroed();
+            let mut max: i32 = mem::zeroed();
+            nvml_try(sym(self.device, &mut min, &mut max))?;
+            Ok((min, max))
+        }
+    }
+
+    #[doc(alias = "nvmlDeviceGetMemClkVfOffset")]
+    pub fn mem_clk_vf_offset(&self) -> Result<i32, NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetMemClkVfOffset.as_ref())?;
+
+        unsafe {
+            let mut value: i32 = mem::zeroed();
+            nvml_try(sym(self.device, &mut value))?;
+            println!("value as u32: {}", u32::from_le_bytes(value.to_le_bytes()));
+            // println!("value as i64: {}", i64::from_le_bytes(value.to_le_bytes()));
+            Ok(value)
+        }
+    }
+
+    #[doc(alias = "nvmlDeviceSetMemClkVfOffset")]
+    pub fn set_mem_clk_vf_offset(&self, value: i32) -> Result<(), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceSetMemClkVfOffset.as_ref())?;
+
+        unsafe {
+            nvml_try(sym(self.device, value))?;
+            Ok(())
+        }
+    }
+
     /**
     Gets information about processes with a graphics context running on this `Device`.
 

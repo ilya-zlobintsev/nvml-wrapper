@@ -1,7 +1,4 @@
-use std::thread::sleep;
-use std::time::Duration;
-
-use nvml_wrapper::enum_wrappers::device::{Clock, ClockType, PerformanceState, TemperatureSensor};
+use nvml_wrapper::enum_wrappers::device::{Clock, TemperatureSensor};
 use nvml_wrapper::error::NvmlError;
 use nvml_wrapper::{cuda_driver_version_major, cuda_driver_version_minor, Nvml};
 use pretty_bytes::converter::convert;
@@ -85,73 +82,5 @@ fn main() -> Result<(), NvmlError> {
         cuda_driver_version_minor(cuda_version)
     );
 
-    println!("pstate: {:?}", device.performance_state());
-
-    // let pstates = (0..15).map(|i| PerformanceState::try_from(i).unwrap());
-    let pstate = PerformanceState::Zero;
-
-    println!(
-        "current offset for pstate {pstate:?}: {:?}",
-        device.clock_offset(ClockType::Mem, pstate)
-    );
-
-    sleep(Duration::from_secs(1));
-    println!(
-        "set offset {:?}",
-        device.set_clock_offset(ClockType::Mem, pstate, -100)
-    );
-
-    println!(
-        "current offset for pstate {pstate:?}: {:?}",
-        device.clock_offset(ClockType::Mem, pstate)
-    );
-
-    println!(
-        "set offset {:?}",
-        device.set_clock_offset(ClockType::Mem, pstate, 0)
-    );
-
-    // for pstate in pstates {
-    //     for clock_type in [ClockType::Graphics, ClockType::Mem] {
-    //         println!(
-    //             "{clock_type:?} offset for pstate {pstate:?}: {:?}",
-    //             device.clock_offset(clock_type, pstate)
-    //         )
-    //     }
-    // }
-
-    /*println!("Fan count: {:?}", device.num_fans());
-    println!("Fan control policy: {:?}", device.fan_control_policy(0));
-    // println!(
-    //     "{:?}",
-    //     device.set_fan_control_policy(0, FanControlPolicy::Manual)
-    // );
-    println!("{:?}", device.set_fan_speed(0, 70));
-    println!("{:?}", device.set_fan_speed(1, 70));
-
-    println!("Set custom speed, current speed: {:?}", device.fan_speed(0));
-    sleep(Duration::from_millis(2500));
-    println!("Fan control policy: {:?}", device.fan_control_policy(0));
-
-    println!("{:?}", device.set_default_fan_speed(0));
-    println!("{:?}", device.set_default_fan_speed(1));
-    println!(
-        "Set default speed, current speed: {:?}",
-        device.fan_speed(0)
-    );
-    sleep(Duration::from_millis(1500));
-    println!("current speed: {:?}", device.fan_speed(0));
-    // println!(
-    //     "{:?}",
-    //     device.set_fan_control_policy(0, FanControlPolicy::TemperatureContinousSw)
-    // );*/
-    // println!("min max speed: {:?}", device.min_max_fan_speed());
-    // println!("{:?}", device.set_fan_speed(0, 100));
-    // sleep(Duration::from_millis(1500));
-    // println!("{:?}", device.set_fan_speed(0, 20));
-    // sleep(Duration::from_millis(10000));
-    // println!("{:?}", device.set_default_fan_speed(0));
-
-    // print!("\n\n");
     Ok(())
 }
