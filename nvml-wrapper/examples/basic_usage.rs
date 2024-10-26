@@ -1,4 +1,7 @@
-use nvml_wrapper::enum_wrappers::device::{Clock, TemperatureSensor};
+use std::thread::sleep;
+use std::time::Duration;
+
+use nvml_wrapper::enum_wrappers::device::{Clock, ClockType, PerformanceState, TemperatureSensor};
 use nvml_wrapper::error::NvmlError;
 use nvml_wrapper::{cuda_driver_version_major, cuda_driver_version_minor, Nvml};
 use pretty_bytes::converter::convert;
@@ -81,6 +84,49 @@ fn main() -> Result<(), NvmlError> {
         cuda_driver_version_major(cuda_version),
         cuda_driver_version_minor(cuda_version)
     );
+
+    let supported_pstates = device.supported_performance_states()?;
+    println!("Supported pstates: {supported_pstates:?}",);
+
+    for pstate in &supported_pstates {
+        println!(
+            "Current offset: {:?}",
+            device.clock_offset(ClockType::Graphics, *pstate)?
+        );
+
+        println!(
+            "Set offset: {:?}",
+            device.set_clock_offset(ClockType::Graphics, *pstate, -200)?
+        );
+        println!(
+            "Current offset: {:?}",
+            device.clock_offset(ClockType::Graphics, PerformanceState::Zero)?
+        );
+    }
+
+    sleep(Duration::from_secs(1));
+    println!("Resetting to default");
+
+    for pstate in supported_pstates {
+        println!(
+            "Set offset: {:?}",
+            device.set_clock_offset(ClockType::Graphics, pstate, 0)?
+        );
+        println!(
+            "Current offset: {:?}",
+            device.clock_offset(ClockType::Graphics, PerformanceState::Zero)?
+        );
+    }
+
+    // println!(
+    //     "Set offset: {:?}",
+    //     device.set_clock_offset(ClockType::Graphics, PerformanceState::Zero, 0)?
+    // );
+
+    // println!(
+    //     "Current offset: {:?}",
+    //     device.clock_offset(ClockType::Graphics, PerformanceState::Zero)?
+    // );
 
     Ok(())
 }
