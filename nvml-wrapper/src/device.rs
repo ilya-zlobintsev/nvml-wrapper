@@ -1441,7 +1441,7 @@ impl<'nvml> Device<'nvml> {
 
     pub fn clock_offset(
         &self,
-        clock_type: ClockType,
+        clock_type: Clock,
         power_state: PerformanceState,
     ) -> Result<ClockOffset, NvmlError> {
         let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetClockOffsets.as_ref())?;
@@ -1462,7 +1462,7 @@ impl<'nvml> Device<'nvml> {
 
     pub fn set_clock_offset(
         &self,
-        clock_type: ClockType,
+        clock_type: Clock,
         power_state: PerformanceState,
         offset: i32,
     ) -> Result<(), NvmlError> {
@@ -1571,7 +1571,7 @@ impl<'nvml> Device<'nvml> {
     #[doc(alias = "nvmlDeviceGetMinMaxClockOfPState")]
     pub fn min_max_clock_of_pstate(
         &self,
-        clock_type: ClockType,
+        clock_type: Clock,
         pstate: PerformanceState,
     ) -> Result<(u32, u32), NvmlError> {
         let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetMinMaxClockOfPState.as_ref())?;
@@ -1594,6 +1594,39 @@ impl<'nvml> Device<'nvml> {
 
     // TODO: these functions can be replaced with `ClockOffsets` ones, but the header needs to be updated for driver 555+
 
+    #[doc(alias = "nvmlDeviceGetGpcClkMinMaxVfOffset")]
+    pub fn gpc_clk_min_max_vf_offset(&self) -> Result<(i32, i32), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetGpcClkMinMaxVfOffset.as_ref())?;
+
+        unsafe {
+            let mut min: i32 = mem::zeroed();
+            let mut max: i32 = mem::zeroed();
+            nvml_try(sym(self.device, &mut min, &mut max))?;
+            Ok((min, max))
+        }
+    }
+
+    #[doc(alias = "nvmlDeviceGetGpcClkMinMaxVfOffset")]
+    pub fn gpc_clk_vf_offset(&self) -> Result<i32, NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetGpcClkVfOffset.as_ref())?;
+
+        unsafe {
+            let mut value: i32 = mem::zeroed();
+            nvml_try(sym(self.device, &mut value))?;
+            Ok(value)
+        }
+    }
+
+    #[doc(alias = "nvmlDeviceSetGpcClkMinMaxVfOffset")]
+    pub fn set_gpc_clk_vf_offset(&self, value: i32) -> Result<(), NvmlError> {
+        let sym = nvml_sym(self.nvml.lib.nvmlDeviceSetGpcClkVfOffset.as_ref())?;
+
+        unsafe {
+            nvml_try(sym(self.device, value))?;
+            Ok(())
+        }
+    }
+
     #[doc(alias = "nvmlDeviceGetMemClkMinMaxVfOffset")]
     pub fn mem_clk_min_max_vf_offset(&self) -> Result<(i32, i32), NvmlError> {
         let sym = nvml_sym(self.nvml.lib.nvmlDeviceGetMemClkMinMaxVfOffset.as_ref())?;
@@ -1613,8 +1646,6 @@ impl<'nvml> Device<'nvml> {
         unsafe {
             let mut value: i32 = mem::zeroed();
             nvml_try(sym(self.device, &mut value))?;
-            println!("value as u32: {}", u32::from_le_bytes(value.to_le_bytes()));
-            // println!("value as i64: {}", i64::from_le_bytes(value.to_le_bytes()));
             Ok(value)
         }
     }

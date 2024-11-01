@@ -1,6 +1,6 @@
 use crate::bitmasks::device::FbcFlags;
 use crate::enum_wrappers::device::{
-    BridgeChip, ClockType, EncoderType, FbcSessionType, PerformanceState, SampleValueType,
+    BridgeChip, Clock, EncoderType, FbcSessionType, PerformanceState, SampleValueType,
 };
 use crate::enums::device::{FirmwareVersion, SampleValue, UsedGpuMemory};
 use crate::error::{nvml_try, Bits, NvmlError};
@@ -661,7 +661,7 @@ impl TryFrom<nvmlFBCSessionInfo_t> for FbcSessionInfo {
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ClockOffset {
-    pub clock_type: ClockType,
+    pub clock_type: Clock,
     pub state: PerformanceState,
     pub clock_offset_mhz: i32,
     pub min_clock_offset_mhz: i32,
@@ -673,7 +673,7 @@ impl TryFrom<nvmlClockOffset_t> for ClockOffset {
 
     fn try_from(value: nvmlClockOffset_t) -> Result<Self, Self::Error> {
         Ok(Self {
-            clock_type: ClockType::try_from(value.type_)?,
+            clock_type: Clock::try_from(value.type_)?,
             state: PerformanceState::try_from(value.pstate)?,
             clock_offset_mhz: value.clockOffsetMHz,
             min_clock_offset_mhz: value.minClockOffsetMHz,

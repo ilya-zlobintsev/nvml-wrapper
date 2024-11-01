@@ -1,10 +1,9 @@
-use std::thread::sleep;
-use std::time::Duration;
-
-use nvml_wrapper::enum_wrappers::device::{Clock, ClockType, PerformanceState, TemperatureSensor};
+use nvml_wrapper::enum_wrappers::device::{Clock, TemperatureSensor};
 use nvml_wrapper::error::NvmlError;
 use nvml_wrapper::{cuda_driver_version_major, cuda_driver_version_minor, Nvml};
 use pretty_bytes::converter::convert;
+use std::thread::sleep;
+use std::time::Duration;
 
 fn main() -> Result<(), NvmlError> {
     let nvml = Nvml::init()?;
@@ -85,38 +84,79 @@ fn main() -> Result<(), NvmlError> {
         cuda_driver_version_minor(cuda_version)
     );
 
-    let supported_pstates = device.supported_performance_states()?;
-    println!("Supported pstates: {supported_pstates:?}",);
+    println!("max clock: {:?}", device.max_clock_info(Clock::Graphics));
+    println!("clock info: {:?}", device.clock_info(Clock::Graphics));
 
-    for pstate in &supported_pstates {
-        println!(
-            "Current offset: {:?}",
-            device.clock_offset(ClockType::Graphics, *pstate)?
-        );
+    println!(
+        "Current gpc offset: {}, range: {:?}",
+        device.gpc_clk_vf_offset()?,
+        device.gpc_clk_min_max_vf_offset()
+    );
 
-        println!(
-            "Set offset: {:?}",
-            device.set_clock_offset(ClockType::Graphics, *pstate, -200)?
-        );
-        println!(
-            "Current offset: {:?}",
-            device.clock_offset(ClockType::Graphics, PerformanceState::Zero)?
-        );
-    }
+    let offset = 100;
+    device.set_gpc_clk_vf_offset(offset)?;
 
-    sleep(Duration::from_secs(1));
-    println!("Resetting to default");
+    println!("Set gpc offset to {offset}");
+    println!(
+        "Set offset to {offset}, current offset reading: {}",
+        device.gpc_clk_vf_offset()?,
+    );
 
-    for pstate in supported_pstates {
-        println!(
-            "Set offset: {:?}",
-            device.set_clock_offset(ClockType::Graphics, pstate, 0)?
-        );
-        println!(
-            "Current offset: {:?}",
-            device.clock_offset(ClockType::Graphics, PerformanceState::Zero)?
-        );
-    }
+    sleep(Duration::from_secs(2));
+    println!("max clock: {:?}", device.max_clock_info(Clock::Graphics));
+
+    let offset = -100;
+    device.set_gpc_clk_vf_offset(offset)?;
+
+    println!("Set gpc offset to {offset}");
+    println!(
+        "Set offset to {offset}, current offset reading: {}",
+        device.gpc_clk_vf_offset()?,
+    );
+
+    sleep(Duration::from_secs(2));
+
+    device.set_gpc_clk_vf_offset(0)?;
+    println!("Reset offset");
+
+    // let supported_pstates = device.supported_performance_states()?;
+    // println!("Supported pstates: {supported_pstates:?}",);
+
+    // for pstate in &supported_pstates {
+    //     println!(
+    //         "Current offset: {:?}",
+    //         device.clock_offset(Clock::Graphics, *pstate)?
+    //     );
+
+    //     println!(
+    //         "Set offset: {:?}",
+    //         device.set_clock_offset(Clock::Graphics, *pstate, -200)?
+    //     );
+    //     println!(
+    //         "Current offset: {:?}",
+    //         device.clock_offset(Clock::Graphics, *pstate)?
+    //     );
+    //     println!(
+    //         "Min max clock of pstate: {:?}",
+    //         device.min_max_clock_of_pstate(Clock::Graphics, *pstate)?
+    //     );
+    // }
+
+    // println!("max clock: {:?}", device.max_clock_info(Clock::Graphics));
+
+    // sleep(Duration::from_secs(1));
+    // println!("Resetting to default");
+
+    // for pstate in supported_pstates {
+    //     println!(
+    //         "Set offset: {:?}",
+    //         device.set_clock_offset(Clock::Graphics, pstate, 0)?
+    //     );
+    //     println!(
+    //         "Current offset: {:?}",
+    //         device.clock_offset(Clock::Graphics, pstate)?
+    //     );
+    // }
 
     // println!(
     //     "Set offset: {:?}",
