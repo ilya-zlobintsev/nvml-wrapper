@@ -152,10 +152,10 @@ use crate::struct_wrappers::unit::HwbcEntry;
 use crate::bitmasks::InitFlags;
 
 #[cfg(not(target_os = "linux"))]
-const LIB_PATH: &str = "nvml.dll";
+const LIB_PATHS: &[&str] = &["nvml.dll"];
 
 #[cfg(target_os = "linux")]
-const LIB_PATH: &str = "libnvidia-ml.so";
+const LIB_PATHS: &[&str] = &["libnvidia-ml.so", "libnvidia-ml.so.1"];
 
 /// Determines the major version of the CUDA driver given the full version.
 ///
@@ -230,7 +230,19 @@ impl Nvml {
     // Checked against local
     #[doc(alias = "nvmlInit_v2")]
     pub fn init() -> Result<Self, NvmlError> {
-        Self::init_internal(LIB_PATH)
+        let mut error = None;
+
+        for lib_path in LIB_PATHS {
+            match Self::init_internal(lib_path) {
+                Ok(nvml) => return Ok(nvml),
+                Err(err) => {
+                    error = Some(err);
+                }
+            }
+        }
+
+        // We have tried loading at least one path at this point
+        Err(error.unwrap())
     }
 
     fn init_internal(path: impl AsRef<std::ffi::OsStr>) -> Result<Self, NvmlError> {
@@ -274,7 +286,19 @@ impl Nvml {
     */
     #[doc(alias = "nvmlInitWithFlags")]
     pub fn init_with_flags(flags: InitFlags) -> Result<Self, NvmlError> {
-        Self::init_with_flags_internal(LIB_PATH, flags)
+        let mut error = None;
+
+        for lib_path in LIB_PATHS {
+            match Self::init_with_flags_internal(lib_path, flags) {
+                Ok(nvml) => return Ok(nvml),
+                Err(err) => {
+                    error = Some(err);
+                }
+            }
+        }
+
+        // We have tried loading at least one path at this point
+        Err(error.unwrap())
     }
 
     fn init_with_flags_internal(
@@ -1041,12 +1065,31 @@ impl<'a> NvmlBuilder<'a> {
 
     /// Perform initialization.
     pub fn init(&self) -> Result<Nvml, NvmlError> {
-        let lib_path = self.lib_path.unwrap_or_else(|| LIB_PATH.as_ref());
-
-        if self.flags.is_empty() {
-            Nvml::init_internal(lib_path)
+        if let Some(custom_path) = self.lib_path {
+            if self.flags.is_empty() {
+                Nvml::init_internal(custom_path)
+            } else {
+                Nvml::init_with_flags_internal(custom_path, self.flags)
+            }
         } else {
-            Nvml::init_with_flags_internal(lib_path, self.flags)
+            let mut error = None;
+
+            for lib_path in LIB_PATHS {
+                let result = if self.flags.is_empty() {
+                    Nvml::init_internal(lib_path)
+                } else {
+                    Nvml::init_with_flags_internal(lib_path, self.flags)
+                };
+                match result {
+                    Ok(nvml) => return Ok(nvml),
+                    Err(err) => {
+                        error = Some(err);
+                    }
+                }
+            }
+
+            // We have tried loading at least one path at this point
+            Err(error.unwrap())
         }
     }
 }
