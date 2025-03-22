@@ -1555,8 +1555,7 @@ impl<'nvml> Device<'nvml> {
         )?;
 
         unsafe {
-            let mut pstates =
-                [PerformanceState::Unknown.as_c(); NVML_MAX_GPU_PERF_PSTATES as usize];
+            let mut pstates = vec![mem::zeroed(); NVML_MAX_GPU_PERF_PSTATES as usize];
 
             nvml_try(sym(self.device, pstates.as_mut_ptr(), pstates.len() as u32))?;
 
