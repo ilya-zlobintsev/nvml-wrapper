@@ -84,43 +84,8 @@ fn main() -> Result<(), NvmlError> {
         cuda_driver_version_minor(cuda_version)
     );
 
-    println!("max clock: {:?}", device.max_clock_info(Clock::Graphics));
-    println!("clock info: {:?}", device.clock_info(Clock::Graphics));
-
-    println!(
-        "Current gpc offset: {}, range: {:?}",
-        device.gpc_clk_vf_offset()?,
-        device.gpc_clk_min_max_vf_offset()
-    );
-
-    let offset = 100;
-    device.set_gpc_clk_vf_offset(offset)?;
-
-    println!("Set gpc offset to {offset}");
-    println!(
-        "Set offset to {offset}, current offset reading: {}",
-        device.gpc_clk_vf_offset()?,
-    );
-
-    sleep(Duration::from_secs(2));
-    println!("max clock: {:?}", device.max_clock_info(Clock::Graphics));
-
-    let offset = -100;
-    device.set_gpc_clk_vf_offset(offset)?;
-
-    println!("Set gpc offset to {offset}");
-    println!(
-        "Set offset to {offset}, current offset reading: {}",
-        device.gpc_clk_vf_offset()?,
-    );
-
-    sleep(Duration::from_secs(2));
-
-    device.set_gpc_clk_vf_offset(0)?;
-    println!("Reset offset");
-
-    // let supported_pstates = device.supported_performance_states()?;
-    // println!("Supported pstates: {supported_pstates:?}",);
+    let supported_pstates = device.supported_performance_states()?;
+    println!("Supported pstates: {supported_pstates:?}");
 
     // for pstate in &supported_pstates {
     //     println!(
@@ -146,17 +111,6 @@ fn main() -> Result<(), NvmlError> {
 
     // sleep(Duration::from_secs(1));
     // println!("Resetting to default");
-
-    // for pstate in supported_pstates {
-    //     println!(
-    //         "Set offset: {:?}",
-    //         device.set_clock_offset(Clock::Graphics, pstate, 0)?
-    //     );
-    //     println!(
-    //         "Current offset: {:?}",
-    //         device.clock_offset(Clock::Graphics, pstate)?
-    //     );
-    // }
 
     // println!(
     //     "Set offset: {:?}",
